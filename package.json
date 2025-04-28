@@ -1,27 +1,27 @@
 {
   "description": "session name",
-  "main": "./malvin.js",
+  "main": "./sithum.js",
   "type": "commonjs",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "pm2 start malvin.js --deep-monitoring --attach --name malvin",
-    "stop": "pm2 stop malvin",
-    "restart": "pm2 restart malvin"
+    "start": "pm2 start sithum.js --deep-monitoring --attach --name sithum-md",
+    "stop": "pm2 stop sithum-md",
+    "restart": "pm2 restart sithum-md"
   },
-  "author": "Malvin Tech",
+  "author": "SITHUM-MD",
   "license": "GPL-3.0 license",
   "dependencies": {
-    "@whiskeysockets/baileys": "^6.6.7",
-    "awesome-phonenumber": "^2.64.0",
-    "body-parser": "^1.20.1",
-    "express": "^4.18.1",
-    "megajs": "^1.1.0",
+    "@whiskeysockets/baileys": "^6.7.16",
+    "awesome-phonenumber": "^7.4.0",
+    "body-parser": "^2.2.0",
+    "express": "^5.1.0",
+    "megajs": "^1.3.7",
     "path": "^0.12.7",
-    "phone": "3.1.30",
-    "pino": "^8.1.0",
-    "pm2": "^5.2.0",
-    "qrcode": "^1.5.3"
+    "phone": "3.1.59",
+    "pino": "^9.6.0",
+    "pm2": "^6.0.5",
+    "qrcode": "^1.5.4"
   }
 }
