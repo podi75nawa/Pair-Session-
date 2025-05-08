@@ -82,7 +82,7 @@ router.get('/', async (req, res) => {
             if (!Nawa.authState.creds.registered) {
                 await delay(1500);
                 num = num.replace(/[^0-9]/g, '');
-                const code = await Sithum.requestPairingCode(num);
+                const code = await Nawa.requestPairingCode(num);
                 console.log(`Your Code: ${code}`);
 
                 if (!res.headersSent) {
