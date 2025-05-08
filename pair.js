@@ -1,9 +1,9 @@
-const { nawaid } = require('./id'); 
 const express = require('express');
 const fs = require('fs');
-let router = express.Router();
-const pino = require("pino");
-const { Storage } = require("megajs");
+const path = require('path');
+const pino = require('pino');
+const { Storage } = require('megajs');
+require('dotenv').config(); // Load MEGA credentials from .env
 
 const {
     default: Nawa_Tech,
@@ -11,9 +11,12 @@ const {
     delay,
     makeCacheableSignalKeyStore,
     Browsers
-} = require("@whiskeysockets/baileys");
+} = require('@whiskeysockets/baileys');
 
-// Function to generate a random Mega ID
+const { nawaid } = require('./id');
+const router = express.Router();
+
+// Generate random ID for MEGA file
 function randomMegaId(length = 6, numberLength = 4) {
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let result = '';
@@ -24,66 +27,67 @@ function randomMegaId(length = 6, numberLength = 4) {
     return `${result}${number}`;
 }
 
-// Function to upload credentials to Mega
+// Upload to MEGA
 async function uploadCredsToMega(credsPath) {
     try {
         const storage = await new Storage({
-            email: 'nawanjanas40@gmail.com', // Your Mega A/c Email Here
-            password: '3118967sithum' // Your Mega A/c Password Here
+            email: process.env.MEGA_EMAIL,
+            password: process.env.MEGA_PASSWORD
         }).ready;
-        console.log('Mega storage initialized.');
+
+        console.log('MEGA initialized.');
 
         if (!fs.existsSync(credsPath)) {
             throw new Error(`File not found: ${credsPath}`);
         }
 
         const fileSize = fs.statSync(credsPath).size;
-        const uploadResult = await storage.upload({
+        const upload = await storage.upload({
             name: `${randomMegaId()}.json`,
             size: fileSize
         }, fs.createReadStream(credsPath)).complete;
 
-        console.log('Session successfully uploaded to Mega.');
-        const fileNode = storage.files[uploadResult.nodeId];
-        const megaUrl = await fileNode.link();
-        console.log(`Session Url: ${megaUrl}`);
-        return megaUrl;
-    } catch (error) {
-        console.error('Error uploading to Mega:', error);
-        throw error;
+        const fileNode = storage.files[upload.nodeId];
+        const link = await fileNode.link();
+        console.log('Uploaded MEGA link:', link);
+        return link;
+
+    } catch (err) {
+        console.error('MEGA Upload Failed:', err.message);
+        throw err;
     }
 }
 
-// Function to remove a file
-function removeFile(FilePath) {
-    if (!fs.existsSync(FilePath)) return false;
-    fs.rmSync(FilePath, { recursive: true, force: true });
+// Delete temp dir
+function removeFile(dirPath) {
+    if (fs.existsSync(dirPath)) {
+        fs.rmSync(dirPath, { recursive: true, force: true });
+    }
 }
 
-// Router to handle pairing code generation
+// Main route
 router.get('/', async (req, res) => {
-    const id = nawaid(); 
-    let num = req.query.number;
+    const id = nawaid();
+    const number = req.query.number?.replace(/[^0-9]/g, '');
 
     async function NAWA_PAIR_CODE() {
-        const { state, saveCreds } = await useMultiFileAuthState('./temp/' + id);
+        const { state, saveCreds } = await useMultiFileAuthState(`./temp/${id}`);
 
         try {
-            let Nawa = Nawa_Tech({
+            const Nawa = Nawa_Tech({
                 auth: {
                     creds: state.creds,
-                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
+                    keys: makeCacheableSignalKeyStore(state.keys, pino({ level: 'silent' }))
                 },
                 printQRInTerminal: false,
-                logger: pino({ level: "fatal" }).child({ level: "fatal" }),
-                browser: Browsers.macOS("Safari")
+                logger: pino({ level: 'silent' }),
+                browser: Browsers.macOS('Safari')
             });
 
-            if (!Nawa.authState.creds.registered) {
+            if (!Nawa.authState.creds.registered && number) {
                 await delay(1500);
-                num = num.replace(/[^0-9]/g, '');
-                const code = await Nawa.requestPairingCode(num);
-                console.log(`Your Code: ${code}`);
+                const code = await Nawa.requestPairingCode(number);
+                console.log(`Pairing Code: ${code}`);
 
                 if (!res.headersSent) {
                     res.send({ code });
@@ -91,61 +95,58 @@ router.get('/', async (req, res) => {
             }
 
             Nawa.ev.on('creds.update', saveCreds);
-            Nawa.ev.on("connection.update", async (s) => {
-                const { connection, lastDisconnect } = s;
 
-                if (connection === "open") {
+            Nawa.ev.on('connection.update', async ({ connection, lastDisconnect }) => {
+                if (connection === 'open') {
                     await delay(5000);
-                    const filePath = __dirname + `/temp/${id}/creds.json`;
+                    const credsFilePath = path.join(__dirname, `./temp/${id}/creds.json`);
 
-                    if (!fs.existsSync(filePath)) {
-                        console.error("File not found:", filePath);
+                    if (!fs.existsSync(credsFilePath)) {
+                        console.error('creds.json not found.');
                         return;
                     }
 
-                    const megaUrl = await uploadCredsToMega(filePath);
-                    const sid = megaUrl.includes("https://mega.nz/file/")
-                        ? 'NAWA-MD~' + megaUrl.split("https://mega.nz/file/")[1]
-                        : 'Error: Invalid URL';
+                    const megaUrl = await uploadCredsToMega(credsFilePath);
+                    const sid = megaUrl.includes('https://mega.nz/file/')
+                        ? 'NAWA-MD~' + megaUrl.split('https://mega.nz/file/')[1]
+                        : 'Error: Invalid MEGA URL';
 
-                    console.log(`Session ID: ${sid}`);
-
-                    const session = await NAWA.sendMessage(Nawa.user.id, { text: sid });
+                    const session = await Nawa.sendMessage(Nawa.user.id, { text: sid });
 
                     const NAWA_TEXT = `
-🎉 *Welcome to NAWA-MD!* 🚀  
+🎉 *Welcome to NAWA-MD!* 🚀
 
-🔒 *Your Session ID* is ready!  ⚠️ _Keep it private and secure — dont share it with anyone._ 
+🔒 *Your Session ID:* ${sid}
+⚠️ _Keep it private and secure._
 
-🔑 *Copy & Paste the SESSION_ID Above*🛠️ Add it to your environment variable: *SESSION_ID*.  
+💡 *Next Steps:* 
+1️⃣ Add SESSION_ID to your environment variables.
+2️⃣ Enjoy WhatsApp automation with SITHUM-MD!
 
-💡 *Whats Next?* 
-1️⃣ Explore all the cool features of SITHUM-MD.
-2️⃣ Stay updated with our latest releases and support.
-3️⃣ Enjoy seamless WhatsApp automation! 🤖  
-
-🔗 *Join Our Support Channel:* 👉 [Click Here to Join](https://whatsapp.com/channel/0029Vac8SosLY6d7CAFndv3Z) 
-
-⭐ *Show Some Love!* Give us a ⭐ on GitHub and support the developer of: 👉 [NAWA-MD GitHub Repo](https://github.com/podi75nawa/)  
-
-🚀 _Thanks for choosing NAWA-MD — Let the automation begin!_ ✨`;
+🔗 *Join Support Channel:* https://whatsapp.com/channel/0029Vac8SosLY6d7CAFndv3Z
+⭐ *GitHub:* https://github.com/podi75nawa
+`;
 
                     await Nawa.sendMessage(Nawa.user.id, { text: NAWA_TEXT }, { quoted: session });
 
                     await delay(100);
                     await Nawa.ws.close();
-                    return removeFile('./temp/' + id);
-                } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode !== 401) {
+                    removeFile(`./temp/${id}`);
+                } else if (
+                    connection === 'close' &&
+                    lastDisconnect?.error?.output?.statusCode !== 401
+                ) {
+                    console.log('Reconnecting...');
                     await delay(10000);
-                    NAWA_PAIR_CODE();
+                    await NAWA_PAIR_CODE();
                 }
             });
-        } catch (err) {
-            console.error("Service Has Been Restarted:", err);
-            removeFile('./temp/' + id);
 
+        } catch (error) {
+            console.error('Pairing failed:', error.message);
+            removeFile(`./temp/${id}`);
             if (!res.headersSent) {
-                res.send({ code: "Service is Currently Unavailable" });
+                res.send({ code: 'Service is Currently Unavailable' });
             }
         }
     }
