@@ -105,7 +105,7 @@ router.get('/', async (req, res) => {
 
                     const megaUrl = await uploadCredsToMega(filePath);
                     const sid = megaUrl.includes("https://mega.nz/file/")
-                        ? 'SITHUM-MD~' + megaUrl.split("https://mega.nz/file/")[1]
+                        ? 'NAWA-MD~' + megaUrl.split("https://mega.nz/file/")[1]
                         : 'Error: Invalid URL';
 
                     console.log(`Session ID: ${sid}`);
@@ -113,7 +113,7 @@ router.get('/', async (req, res) => {
                     const session = await Sithum.sendMessage(Sithum.user.id, { text: sid });
 
                     const SITHUM_TEXT = `
-🎉 *Welcome to SITHUM-MD!* 🚀  
+🎉 *Welcome to NAWA-MD!* 🚀  
 
 🔒 *Your Session ID* is ready!  ⚠️ _Keep it private and secure — dont share it with anyone._ 
 
@@ -126,9 +126,9 @@ router.get('/', async (req, res) => {
 
 🔗 *Join Our Support Channel:* 👉 [Click Here to Join](https://whatsapp.com/channel/0029Vac8SosLY6d7CAFndv3Z) 
 
-⭐ *Show Some Love!* Give us a ⭐ on GitHub and support the developer of: 👉 [SITHUM-MD GitHub Repo](https://github.com/podi75nawa/)  
+⭐ *Show Some Love!* Give us a ⭐ on GitHub and support the developer of: 👉 [NAWA-MD GitHub Repo](https://github.com/podi75nawa/)  
 
-🚀 _Thanks for choosing SITHUM-MD — Let the automation begin!_ ✨`;
+🚀 _Thanks for choosing NAWA-MD — Let the automation begin!_ ✨`;
 
                     await Sithum.sendMessage(Sithum.user.id, { text: SITHUM_TEXT }, { quoted: session });
 
