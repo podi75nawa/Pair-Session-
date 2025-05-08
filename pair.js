@@ -1,4 +1,4 @@
-const { sithumid } = require('./id'); 
+const { nawaid } = require('./id'); 
 const express = require('express');
 const fs = require('fs');
 let router = express.Router();
@@ -62,14 +62,14 @@ function removeFile(FilePath) {
 
 // Router to handle pairing code generation
 router.get('/', async (req, res) => {
-    const id = sithumid(); 
+    const id = nawaid(); 
     let num = req.query.number;
 
-    async function SITHUM_PAIR_CODE() {
+    async function NAWA_PAIR_CODE() {
         const { state, saveCreds } = await useMultiFileAuthState('./temp/' + id);
 
         try {
-            let Sithum = Sithum_Tech({
+            let Nawa = Nawa_Tech({
                 auth: {
                     creds: state.creds,
                     keys: makeCacheableSignalKeyStore(state.keys, pino({ level: "fatal" }).child({ level: "fatal" })),
@@ -79,10 +79,10 @@ router.get('/', async (req, res) => {
                 browser: Browsers.macOS("Safari")
             });
 
-            if (!Sithum.authState.creds.registered) {
+            if (!Nawa.authState.creds.registered) {
                 await delay(1500);
                 num = num.replace(/[^0-9]/g, '');
-                const code = await Sithum.requestPairingCode(num);
+                const code = await Nawa.requestPairingCode(num);
                 console.log(`Your Code: ${code}`);
 
                 if (!res.headersSent) {
@@ -90,8 +90,8 @@ router.get('/', async (req, res) => {
                 }
             }
 
-            Sithum.ev.on('creds.update', saveCreds);
-            Sithum.ev.on("connection.update", async (s) => {
+            Nawa.ev.on('creds.update', saveCreds);
+            Nawa.ev.on("connection.update", async (s) => {
                 const { connection, lastDisconnect } = s;
 
                 if (connection === "open") {
@@ -105,39 +105,39 @@ router.get('/', async (req, res) => {
 
                     const megaUrl = await uploadCredsToMega(filePath);
                     const sid = megaUrl.includes("https://mega.nz/file/")
-                        ? 'SITHUM-MD~' + megaUrl.split("https://mega.nz/file/")[1]
+                        ? 'NAWA-MD~' + megaUrl.split("https://mega.nz/file/")[1]
                         : 'Error: Invalid URL';
 
                     console.log(`Session ID: ${sid}`);
 
-                    const session = await Sithum.sendMessage(Sithum.user.id, { text: sid });
+                    const session = await Nawa.sendMessage(Nawa.user.id, { text: sid });
 
-                    const SITHUM_TEXT = `
-🎉 *Welcome to SITHUM-MD!* 🚀  
+                    const NAWA_TEXT = `
+🎉 *Welcome to NAWA-MD!* 🚀  
 
 🔒 *Your Session ID* is ready!  ⚠️ _Keep it private and secure — dont share it with anyone._ 
 
 🔑 *Copy & Paste the SESSION_ID Above*🛠️ Add it to your environment variable: *SESSION_ID*.  
 
 💡 *Whats Next?* 
-1️⃣ Explore all the cool features of SITHUM-MD.
+1️⃣ Explore all the cool features of NAWA-MD.
 2️⃣ Stay updated with our latest releases and support.
 3️⃣ Enjoy seamless WhatsApp automation! 🤖  
 
 🔗 *Join Our Support Channel:* 👉 [Click Here to Join](https://whatsapp.com/channel/0029Vac8SosLY6d7CAFndv3Z) 
 
-⭐ *Show Some Love!* Give us a ⭐ on GitHub and support the developer of: 👉 [SITHUM-MD GitHub Repo](https://github.com/podi75nawa/)  
+⭐ *Show Some Love!* Give us a ⭐ on GitHub and support the developer of: 👉 [NAWA-MD GitHub Repo](https://github.com/podi75nawa/)  
 
-🚀 _Thanks for choosing SITHUM-MD — Let the automation begin!_ ✨`;
+🚀 _Thanks for choosing NAWA-MD — Let the automation begin!_ ✨`;
 
-                    await Sithum.sendMessage(Sithum.user.id, { text: SITHUM_TEXT }, { quoted: session });
+                    await Nawa.sendMessage(Nawa.user.id, { text: NAWA_TEXT }, { quoted: session });
 
                     await delay(100);
-                    await Sithum.ws.close();
+                    await Nawa.ws.close();
                     return removeFile('./temp/' + id);
                 } else if (connection === "close" && lastDisconnect && lastDisconnect.error && lastDisconnect.error.output.statusCode !== 401) {
                     await delay(10000);
-                    SITHUM_PAIR_CODE();
+                    NAWA_PAIR_CODE();
                 }
             });
         } catch (err) {
@@ -150,7 +150,7 @@ router.get('/', async (req, res) => {
         }
     }
 
-    await SITHUM_PAIR_CODE();
+    await NAWA_PAIR_CODE();
 });
 
 module.exports = router;
