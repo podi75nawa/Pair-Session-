@@ -6,7 +6,7 @@ const pino = require("pino");
 const { Storage } = require("megajs");
 
 const {
-    default: Sithum_Tech,
+    default: Nawa_Tech,
     useMultiFileAuthState,
     delay,
     makeCacheableSignalKeyStore,
