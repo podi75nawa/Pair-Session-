@@ -1,16 +1,16 @@
 {
   "description": "session name",
-  "main": "./sithum.js",
+  "main": "./nawa.js",
   "type": "commonjs",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "pm2 start sithum.js --deep-monitoring --attach --name sithum-md",
-    "stop": "pm2 stop sithum-md",
-    "restart": "pm2 restart sithum-md"
+    "start": "pm2 start nawa.js --deep-monitoring --attach --name nawa-md",
+    "stop": "pm2 stop nawa-md",
+    "restart": "pm2 restart nawa-md"
   },
-  "author": "SITHUM-MD",
+  "author": "NAWA-MD",
   "license": "GPL-3.0 license",
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.16",
